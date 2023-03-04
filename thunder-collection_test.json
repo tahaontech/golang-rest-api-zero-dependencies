@@ -1,0 +1,89 @@
+{
+    "client": "Thunder Client",
+    "collectionName": "test",
+    "dateExported": "2023-03-04T15:41:41.611Z",
+    "version": "1.1",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "e52b5bea-7420-404d-b195-1359722a9fef",
+            "colId": "01fef9f7-64a3-4164-82ba-12e5d1c79342",
+            "containerId": "",
+            "name": "http://localhost:8585/coasters/random",
+            "url": "http://localhost:8585/coasters/random",
+            "method": "GET",
+            "sortNum": 10000,
+            "created": "2023-03-04T15:40:38.364Z",
+            "modified": "2023-03-04T15:40:38.364Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "12d2e24e-e8dd-4e41-beb8-c01bf58b3853",
+            "colId": "01fef9f7-64a3-4164-82ba-12e5d1c79342",
+            "containerId": "",
+            "name": "http://localhost:8585/coasters/id1",
+            "url": "http://localhost:8585/coasters/id1",
+            "method": "GET",
+            "sortNum": 20000,
+            "created": "2023-03-04T15:40:48.449Z",
+            "modified": "2023-03-04T15:40:48.449Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "61c886cb-096b-4211-ae83-54d64cccdb32",
+            "colId": "01fef9f7-64a3-4164-82ba-12e5d1c79342",
+            "containerId": "",
+            "name": "http://localhost:8585/coasters",
+            "url": "http://localhost:8585/coasters",
+            "method": "POST",
+            "sortNum": 30000,
+            "created": "2023-03-04T15:40:55.309Z",
+            "modified": "2023-03-04T15:40:55.309Z",
+            "headers": [
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n    \"name\": \"My 225\",\n    \"manufacturer\": \"B+M\",\n    \"inPark\": \"Test\",\n    \"height\": 85\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "b2f75836-49d9-4b05-9f33-e48a556086da",
+            "colId": "01fef9f7-64a3-4164-82ba-12e5d1c79342",
+            "containerId": "",
+            "name": "http://localhost:8585/coasters",
+            "url": "http://localhost:8585/coasters",
+            "method": "GET",
+            "sortNum": 40000,
+            "created": "2023-03-04T15:41:02.509Z",
+            "modified": "2023-03-04T15:41:02.509Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "57262d04-888f-4f9d-aa84-9f04c59315ae",
+            "colId": "01fef9f7-64a3-4164-82ba-12e5d1c79342",
+            "containerId": "",
+            "name": "http://localhost:8585/coasters",
+            "url": "http://localhost:8585/coasters",
+            "method": "GET",
+            "sortNum": 50000,
+            "created": "2023-03-04T15:41:10.534Z",
+            "modified": "2023-03-04T15:41:10.534Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        }
+    ]
+}

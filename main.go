@@ -1,7 +1,201 @@
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"math/rand"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+)
+
+// CONSTS
+var url string = ":8585"
+
+// STRUCTS
+
+type Coaster struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Manufacturer string `json:"manufacturer"`
+	InPark       string `json:"inPark"`
+	Height       int    `json:"height"`
+}
+
+type CoasterHandlers struct {
+	sync.Mutex
+	store map[string]Coaster
+}
+
+func (h *CoasterHandlers) coasters(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		h.get(w, r)
+		return
+	case "POST":
+		h.post(w, r)
+		return
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("method not allowed"))
+		return
+	}
+}
+
+func (h *CoasterHandlers) get(w http.ResponseWriter, r *http.Request) {
+	coasters := make([]Coaster, len(h.store))
+
+	h.Lock()
+	i := 0
+	for _, c := range h.store {
+		coasters[i] = c
+		i++
+	}
+	h.Unlock()
+
+	jsonBytes, err := json.Marshal(coasters)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+	w.Header().Add("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonBytes)
+}
+
+func (h *CoasterHandlers) post(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+
+	ct := r.Header.Get("content-type")
+	if ct != "application/json" {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		w.Write([]byte(fmt.Sprintf("need content-type 'application/json', but got: %s", ct)))
+	}
+
+	var coaster Coaster
+	err = json.Unmarshal(bodyBytes, &coaster)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+	}
+	coaster.ID = fmt.Sprintf("%d", time.Now().UnixNano())
+	h.Lock()
+	h.store[coaster.ID] = coaster
+	defer h.Unlock()
+
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("created"))
+}
+
+func (h *CoasterHandlers) getRandomRoaster(w http.ResponseWriter, r *http.Request) {
+	ids := make([]string, len(h.store))
+	h.Lock()
+	i := 0
+	for id := range h.store {
+		ids[i] = id
+		i++
+	}
+	defer h.Unlock()
+
+	var target string
+	if len(ids) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if len(ids) == 1 {
+		target = ids[0]
+	} else {
+		rand.Seed(time.Now().Unix())
+		target = ids[rand.Intn(len(ids))]
+	}
+
+	w.Header().Add("location", fmt.Sprintf("/coasters/%s", target))
+	w.WriteHeader(http.StatusFound)
+}
+
+func (h *CoasterHandlers) getCoaster(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.String(), "/")
+	if len(parts) != 3 {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("page not found"))
+		return
+	}
+
+	if parts[2] == "random" {
+		h.getRandomRoaster(w, r)
+		return
+	}
+
+	h.Lock()
+	coaster, ok := h.store[parts[2]]
+	h.Unlock()
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	jsonBytes, err := json.Marshal(coaster)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+
+	w.Header().Add("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonBytes)
+}
+
+type adminPortal struct {
+	password string
+}
+
+func (a *adminPortal) handler(w http.ResponseWriter, r *http.Request) {
+	user, pass, ok := r.BasicAuth()
+	if !ok || user != "admin" || pass != a.password {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("401 - unathorize"))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("<html><h1>Super Secret Admin Portal</h1></html>"))
+}
+
+// INITIALIZERS
+
+func newCoasterHandlers() *CoasterHandlers {
+	return &CoasterHandlers{
+		store: map[string]Coaster{
+			"id1": {
+				ID:           "id1",
+				Name:         "Fury 235",
+				Manufacturer: "B+M",
+				InPark:       "Carowinds",
+				Height:       99,
+			},
+		},
+	}
+}
+
+func NewAdminPortal() *adminPortal {
+	return &adminPortal{password: "1234"}
+}
 
 func main() {
-	fmt.Println("Hello World!!")
+	admin := NewAdminPortal()
+	coasterHandlers := newCoasterHandlers()
+
+	http.HandleFunc("/coasters", coasterHandlers.coasters)
+	http.HandleFunc("/coasters/", coasterHandlers.getCoaster)
+	http.HandleFunc("/admin", admin.handler)
+
+	err := http.ListenAndServe(url, nil)
+	if err != nil {
+		panic(err)
+	}
 }
